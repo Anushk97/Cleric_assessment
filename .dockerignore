@@ -1,0 +1,13 @@
+Dockerfile
+
+README.me
+*.pyc
+*.pyo
+*.pyd
+__pycache__
+.pytest_cache
+
+docs/
+website/
+package-lock.json
+package.json
