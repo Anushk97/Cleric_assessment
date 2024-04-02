@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+{% extends "template.html" %}
+
+{% block title %}Question and Extracted Facts{% endblock %}
+
+{% block styles %}
+    {{ super() }} 
+    <style>
+        .added-fact { color: green; }
+        .removed-fact { color: red; }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h1>Question and Extracted Facts</h1>
+
+    <!-- Select for Questions -->
+    <label for="questionSelect">Select Questions:</label>
+    <select id="questionSelect" multiple onchange="updateFactsByDate(document.getElementById('timeSlider').value)">
+        <!-- Assuming you have a list of unique questions available -->
+        {% for question in unique_questions %}
+        <option value="{{ question }}">{{ question }}</option>
+        {% endfor %}
+    </select>
+
+    <input type="date" id="timeSlider" value="{{ start_date }}" onchange="updateFactsByDate(this.value)">
+
+    <div id="factsContainer">
+    {% for date, facts in questions_and_facts['factsByDay'].items() %}
+        <ul>
+            {% for fact in facts %}
+                {% if fact is mapping %}
+                    {% set fact_class = "" %}
+                    {% if 'hours_diff' in fact and fact.hours_diff <= 24 %}
+                        {% if fact['action'] == 'added' %}
+                            {% set fact_class = "added-fact" %}
+                        {% elif fact['action'] == 'rejected' %}
+                            {% set fact_class = "removed-fact" %}
+                        {% endif %}
+                    {% endif %}
+                    {% if fact['timestamp'] %}
+                        {% set timestamp = fact['timestamp'].split('T') %}
+                        {% set date_part = timestamp[0] %}
+                        {% set time_part = timestamp[1].split('.')[0] %}
+                        <li class="{{ fact_class }}" data-date="{{ date_part }}" data-question="{{ fact['question'] }}" data-documents="{{ fact['documents'] | join(',') }}">{{ fact['text'] }}</li>
+                    {% else %}
+                        <li class="{{ fact_class }}" data-date="{{ date_part }}" data-question="{{ fact['question'] }}" data-documents="{{ fact['documents'] | join(',') }}">{{ fact['text'] }}</li>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% endfor %}
+    </div>
+    <button id="resetBtn" onclick="resetQuestionAndFacts()">Empty Bin</button>
+{% endblock %}
+
+{%block scripts %}
+    <script>
+        function updateFactsByDate(selectedDate) {
+            var selectedQuestions = Array.from(document.getElementById('questionSelect').selectedOptions).map(option => option.value);
+            
+            var facts = document.querySelectorAll('#factsContainer li');
+            
+            facts.forEach(function(fact) {
+                var matchesDate = fact.dataset.date === selectedDate;
+                var matchesQuestion = selectedQuestions.length === 0 || selectedQuestions.includes(fact.dataset.question);
+                var factDocuments = fact.dataset.documents.split(',');
+                
+                if (matchesDate && matchesQuestion) {
+                    fact.style.display = '';
+                } else {
+                    fact.style.display = 'none';
+                }
+            });
+        }
+
+        function resetQuestionAndFacts() {
+            fetch('/reset_questions_and_facts', {method: 'POST'})
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    window.location.reload()
+                } else {
+                    alert('Failed to reset questions and facts');
+
+                }
+            })
+            .catch(error => consol.error('Error', error));
+        }
+    </script>
+{% endblock %}

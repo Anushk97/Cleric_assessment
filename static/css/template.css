@@ -1,0 +1,60 @@
+body {
+    background-color: #ffffff; /* Cream color */
+    margin-left: 300px; /* Adjust this value to match the width of your sidebar */
+    /* Other styles for body */
+    font-family: 'Open Sans', sans-serif;
+    color: #333; /* Dark text color for contrast */
+}
+
+nav {
+    height: 100vh; /* Full height of the viewport */
+    width: 250px; /* Width of the sidebar */
+    position: fixed; /* Fixed position to stay in place on scroll */
+    left: 0; /* Align to the left */
+    top: 0; /* Align to the top */
+    background-color: #333; /* Sidebar background color */
+    overflow-x: hidden; /* Hide horizontal overflow */
+    padding-top: 20px; /* Padding at the top */
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    display: block; /* Stack items vertically */
+}
+
+nav ul li {
+    padding: 10px; /* Add some padding to each list item */
+}
+
+nav ul li a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: bold;
+    display: block; /* Make the links fill the list item for easier clicking */
+}
+
+
+#questionSelect {
+    width: 100%; /* Adjust width as needed */
+    height: auto; /* Auto height to adjust based on the number of options */
+    min-height: 100px; /* Minimum height to make the box larger */
+    padding: 10px; /* Add some padding inside the box */
+    font-size: 16px; /* Increase the font size for better readability */
+}
+
+#question {
+    width: 50%; /* Adjust width as needed */
+    height: auto; /* Auto height to adjust based on the number of options */
+    min-height: 20px; /* Minimum height to make the box larger */
+    padding: 10px; /* Add some padding inside the box */
+    font-size: 12px;
+}
+
+#documents {
+    width: 50%; /* Adjust width as needed */
+    height: auto; /* Auto height to adjust based on the number of options */
+    min-height: 20px; /* Minimum height to make the box larger */
+    padding: 10px; /* Add some padding inside the box */
+    font-size: 12px;
+}

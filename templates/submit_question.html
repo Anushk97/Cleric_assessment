@@ -1,0 +1,227 @@
+<!-- templates/submit_question.html -->
+<!DOCTYPE html>
+
+{% extends "template.html" %}
+{% block content %}
+
+
+<html lang="en" dir="ltr">
+<div class="container"></div>
+<head>
+    <title>Submit Question and Documents</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Submit Your Question and Document URLs</h1>
+        <form action="/submit_question_and_documents" method="post">
+            <label for="question">Question:</label><br>
+            <input type="text" id="question" name="question"><br>
+            <label for="documents">Document URLs (comma-separated):</label><br>
+            <textarea id="documents" name="documents" rows="5" cols="33"></textarea><br>
+            <input type="button" value="submit" onclick="submitForm()">
+        </form>
+    </div>
+
+    <div id="suggestionsModal" style="display:none;">
+        <div id="suggestionsContent">
+            <!-- Suggestions will be injected here -->
+        </div>
+        <button onclick="closeModal()">Close</button>
+    </div>
+
+    <script>
+        var suggestions; 
+        function submitForm() {
+            var question = document.getElementById('question').value;
+            //var documents = document.getElementById('documents').value.split(',');
+            var documentsInput = document.getElementById('documents').value;
+            var documents = documentsInput.split(',').map(doc => doc.trim());
+            
+        
+            fetch('/submit_question_and_documents', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    question: question,
+                    documents: documents
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);  // Check if suggestions are in the response
+                displaySuggestions(data.suggestions);
+            });
+        }
+    
+        function displaySuggestions(suggestions) {
+            var modalContent = document.getElementById('suggestionsContent');
+            modalContent.innerHTML = '';  // Clear previous content
+
+            Object.keys(suggestions).forEach(function(date, index) {  // Added 'index' for use in identifier
+                // Create a section for each date
+                var dateSection = document.createElement("div");
+
+                // Optionally, display the date
+                var dateHeader = document.createElement("h4");
+                dateHeader.textContent = "Date: " + date;
+                dateSection.appendChild(dateHeader);
+
+                //var suggestion = suggestions[date];  // Get the suggestion for this date
+                suggestions[date].forEach(function(suggestion, index) {
+                    // Create elements to display the suggestion
+                    var suggestionDiv = document.createElement("div");
+                    var textPara = document.createElement("p");
+                    textPara.textContent = suggestion.text;
+                    suggestionDiv.appendChild(textPara);
+
+                    // Create and append Accept and Reject buttons
+                    var acceptBtn = document.createElement("button");
+                    acceptBtn.textContent = "Accept";
+                    acceptBtn.onclick = function() { handleSuggestionAccept(suggestion, date + '-' + index); };  // Use date-index as identifier
+                    suggestionDiv.appendChild(acceptBtn);
+
+                    var rejectBtn = document.createElement("button");
+                    rejectBtn.textContent = "Reject";
+                    rejectBtn.onclick = function() { handleSuggestionReject(suggestion, date + '-' + index); };  // Use date-index as identifier
+                    suggestionDiv.appendChild(rejectBtn);
+
+                    dateSection.appendChild(suggestionDiv);
+                });
+                    // Append the dateSection to modalContent
+                modalContent.appendChild(dateSection);
+            });
+
+            // Create and append "Close" button
+            var closeBtn = document.createElement("button");
+            closeBtn.textContent = "Close";
+            closeBtn.onclick = closeModal;
+            modalContent.appendChild(closeBtn);
+
+            document.getElementById('suggestionsModal').style.display = 'block';
+        }
+
+        
+        function closeModal() {
+            document.getElementById('suggestionsModal').style.display = 'none';
+        }
+        function handleAcceptAll() {
+        fetch('/bulk_record_suggestion', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                suggestions: suggestions,
+                action: "accept"
+            })
+        })
+        .then(response => response.json())
+        .then(data => closeModal());
+    }
+
+        function handleRejectAll() {
+            fetch('/bulk_record_suggestion', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    suggestions: suggestions,
+                    action: "reject"
+                })
+            })
+            .then(response => response.json())
+            .then(data => closeModal());
+        }
+
+        function handleSuggestionAccept(suggestion, identifier) {
+            console.log("Accepting with identifier:", identifier);
+            // Extract the date from the suggestion object
+            var parts = identifier.split('-');
+            var dateFromIdentifier = parts.slice(0, 3).join('-');
+            var suggestionElementId = 'suggestion-' + identifier;
+            console.log("Target element:", suggestionElementId);
+
+            fetch('/record_suggestion', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    suggestion: suggestion,  // Pass the specific suggestion object
+                    action: "accept",
+                    date: dateFromIdentifier  // Use the extracted date from the suggestion
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                var suggestionElement = document.getElementById(suggestionElementId);
+                console.log("Suggestion element found:", suggestionElement);
+                if (suggestionElement) {
+                    var acceptButtons = suggestionElement.getElementsByTagName('button');
+                    for (var i = 0; i < acceptButtons.length; i++) {
+                        // Check if the button is the "Accept" button
+                        if (acceptButtons[i].textContent === 'Accept') {
+                            acceptButtons[i].style.backgroundColor = 'green'; // Change the button's background to green
+                            acceptButtons[i].style.color = 'white'; // Change the text color to white for better contrast
+                            acceptButtons[i].disabled = true; // Optionally disable the button to prevent re-acceptance
+                        }
+                    }
+                }
+            });
+        }
+
+
+        function handleSuggestionReject(suggestion, identifier) {
+            // Assuming rejection doesn't need to be sent to the server, or implement similarly to accept
+            // If needed, you can send a similar request to record a rejection
+            var parts = identifier.split('-');
+            var dateFromIdentifier = parts.slice(0, 3).join('-');
+
+            fetch('/record_suggestion', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    suggestion: suggestion,  // Pass the specific suggestion object
+                    action: "reject",
+                    date: dateFromIdentifier  // Use the extracted date from the suggestion
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Remove the suggestion div using the 'identifier' to construct its ID
+                var suggestionDiv = document.getElementById('suggestion-' + identifier);
+                if (suggestionDiv) {
+                    suggestionDiv.parentNode.removeChild(suggestionDiv);
+                }
+            });
+        }
+        
+        </script>
+
+        <style>
+        #suggestionsModal {
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        
+        #suggestionsContent {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        </style>
+        
+</body>
+</html>
+{% endblock %}
+
+
