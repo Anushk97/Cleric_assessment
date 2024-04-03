@@ -9,7 +9,7 @@ import copy
 app = Flask(__name__)
 app.jinja_env.add_extension('jinja2.ext.do')
 
-openai.api_key = ''
+openai.api_key = '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'
 
 questions_and_facts = {
     "question": [], #list of dictionaries, questions and documents text
