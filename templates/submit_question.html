@@ -28,6 +28,69 @@
         </div>
         <button onclick="closeModal()">Close</button>
     </div>
+    
+    <div id="loadingIndicator" style="display:none;">
+        <div class="loader"></div>
+        <p>Please wait...</p>
+    </div>
+    
+    <style>
+    .loader {
+        border: 8px solid #f3f3f3; /* Lighter grey as the background of the loader */
+        border-top: 8px solid #3498db; /* Primary color */
+        border-right: 8px solid #e74c3c; /* Secondary color */
+        border-bottom: 8px solid #2ecc71; /* Tertiary color */
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1.5s ease-in-out infinite;
+        position: relative;
+    }
+    
+    .loader:before {
+        content: "";
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        right: 5px;
+        bottom: 5px;
+        border: 4px solid transparent;
+        border-top-color: #9b59b6; /* Quaternary color */
+        border-radius: 50%;
+        animation: spinReverse 2s linear infinite;
+    }
+    
+    .loader:after {
+        content: "";
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        right: 15px;
+        bottom: 15px;
+        border: 2px solid transparent;
+        border-top-color: #f1c40f; /* Quinary color */
+        border-radius: 50%;
+        animation: spin 2.5s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% {
+        transform: rotate(0deg);
+        }
+        100% {
+        transform: rotate(360deg);
+        }
+    }
+    
+    @keyframes spinReverse {
+        0% {
+        transform: rotate(360deg);
+        }
+        100% {
+        transform: rotate(0deg);
+        }
+    }
+    </style>
 
     <script>
         var suggestions; 
@@ -37,7 +100,8 @@
             var documentsInput = document.getElementById('documents').value;
             var documents = documentsInput.split(',').map(doc => doc.trim());
             
-        
+            document.getElementById('loadingIndicator').style.display = 'block';
+
             fetch('/submit_question_and_documents', {
                 method: 'POST',
                 headers: {
@@ -56,6 +120,8 @@
         }
     
         function displaySuggestions(suggestions) {
+            document.getElementById('loadingIndicator').style.display = 'none';
+
             var modalContent = document.getElementById('suggestionsContent');
             modalContent.innerHTML = '';  // Clear previous content
 
@@ -76,14 +142,28 @@
                     textPara.textContent = suggestion.text;
                     suggestionDiv.appendChild(textPara);
 
+                    if (suggestion.contradictions && suggestion.contradictions.length > 0) {
+                        var contradictionsPara = document.createElement("p");
+                        console.log("contradiction", contradictionsPara);
+                        contradictionsPara.textContent = "Contradictions:";
+                        contradictionsPara.style.color = "red";  // Highlight contradictions
+                        suggestion.contradictions.forEach(function(contradiction) {
+                            var contradictionText = document.createElement("p");
+                            contradictionText.textContent = contradiction;
+                            contradictionsPara.appendChild(contradictionText);
+                        });
+                        suggestionDiv.appendChild(contradictionsPara);
+                    }
                     // Create and append Accept and Reject buttons
                     var acceptBtn = document.createElement("button");
                     acceptBtn.textContent = "Accept";
+                    acceptBtn.id = 'acceptBtn-' + date + '-' + index;
                     acceptBtn.onclick = function() { handleSuggestionAccept(suggestion, date + '-' + index); };  // Use date-index as identifier
                     suggestionDiv.appendChild(acceptBtn);
 
                     var rejectBtn = document.createElement("button");
                     rejectBtn.textContent = "Reject";
+                    rejectBtn.id = 'rejectBtn-' + date + '-' + index;
                     rejectBtn.onclick = function() { handleSuggestionReject(suggestion, date + '-' + index); };  // Use date-index as identifier
                     suggestionDiv.appendChild(rejectBtn);
 
@@ -138,7 +218,8 @@
             var parts = identifier.split('-');
             var dateFromIdentifier = parts.slice(0, 3).join('-');
             var suggestionElementId = 'suggestion-' + identifier;
-            console.log("Target element:", suggestionElementId);
+            var acceptButtonId = 'acceptBtn-' + identifier;
+            console.log("Target element:", acceptButtonId);
 
             fetch('/record_suggestion', {
                 method: 'POST',
@@ -153,21 +234,15 @@
             })
             .then(response => response.json())
             .then(data => {
-                var suggestionElement = document.getElementById(suggestionElementId);
-                console.log("Suggestion element found:", suggestionElement);
-                if (suggestionElement) {
-                    var acceptButtons = suggestionElement.getElementsByTagName('button');
-                    for (var i = 0; i < acceptButtons.length; i++) {
-                        // Check if the button is the "Accept" button
-                        if (acceptButtons[i].textContent === 'Accept') {
-                            acceptButtons[i].style.backgroundColor = 'green'; // Change the button's background to green
-                            acceptButtons[i].style.color = 'white'; // Change the text color to white for better contrast
-                            acceptButtons[i].disabled = true; // Optionally disable the button to prevent re-acceptance
-                        }
+                var acceptButton = document.getElementById(acceptButtonId);
+                console.log("accept element found:", acceptButton);
+                if (acceptButton) {
+                    acceptButton.style.backgroundColor = 'green'; // Change the button's background to green
+                    acceptButton.style.color = 'white'; // Change the text color to white for better contrast
+                    acceptButton.disabled = true;// Optionally disable the button to prevent re-acceptance
                     }
-                }
-            });
-        }
+                });
+            }
 
 
         function handleSuggestionReject(suggestion, identifier) {
@@ -175,6 +250,8 @@
             // If needed, you can send a similar request to record a rejection
             var parts = identifier.split('-');
             var dateFromIdentifier = parts.slice(0, 3).join('-');
+            var rejectButtonId = 'rejectBtn-' + identifier;
+            console.log("Target element:", rejectButtonId);
 
             fetch('/record_suggestion', {
                 method: 'POST',
@@ -189,14 +266,16 @@
             })
             .then(response => response.json())
             .then(data => {
-                // Remove the suggestion div using the 'identifier' to construct its ID
-                var suggestionDiv = document.getElementById('suggestion-' + identifier);
-                if (suggestionDiv) {
-                    suggestionDiv.parentNode.removeChild(suggestionDiv);
-                }
-            });
-        }
-        
+                var rejectButton = document.getElementById(rejectButtonId);
+                console.log("reject element found:", rejectButton);
+                if (rejectButton) {
+                    rejectButton.style.backgroundColor = 'red'; // Change the button's background to green
+                    rejectButton.style.color = 'white'; // Change the text color to white for better contrast
+                    rejectButton.disabled = true;// Optionally disable the button to prevent re-acceptance
+                    }
+                });
+            }
+
         </script>
 
         <style>

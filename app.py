@@ -9,7 +9,7 @@ import copy
 app = Flask(__name__)
 app.jinja_env.add_extension('jinja2.ext.do')
 
-openai.api_key = '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'
+openai.api_key = ''
 
 questions_and_facts = {
     "question": [],
@@ -43,6 +43,41 @@ def fetch_and_extract_text(urls):
             print(f"Failed to fetch or extract text from {url}: {e}")
             extracted_texts[url] = ""  # Consider how you want to handle failures
     return extracted_texts
+
+def find_contradictions(new_fact, existing_facts):
+    print('new fact', new_fact)
+    print('existing fact', existing_facts)
+    contradictions = []
+    for existing_fact in existing_facts:
+        prompt = f"Does the statement: '{new_fact}' contradict the existing fact: '{existing_fact}'?"
+
+        response = openai.chat.completions.create(
+            model="gpt-3.5-turbo-0125",
+            messages=[
+            {"role": "system", "content": f"Is this statement: '{new_fact}' similar to the existing fact: '{existing_fact}'?"}],
+        n=1,
+        stop=None,
+        temperature=0.4
+        )
+        
+        print('response', response)
+        
+        # if 'choices' in response and response['choices']:
+        #     # Access the 'text' of the first choice
+        #     text_content = response['choices'][0].get('text', '')
+        #     if "yes" in text_content.lower():
+        #         contradictions.append(existing_fact)
+        if response.choices:
+            content = response.choices[0].message.content
+            if "yes" in content.lower():
+                contradictions.append(existing_fact)
+        
+        # if "yes" in response.choices[0].text.lower():
+        #     contradictions.append(existing_fact)
+
+    print('contradictions', contradictions)
+    return contradictions
+
 
 @app.route('/submit_question_and_documents', methods = ['POST'])
 def submit_question_and_documents():
@@ -96,13 +131,17 @@ def submit_question_and_documents():
             pass
         else:
             all_suggestions[formatted_date] = []
-    
+
+        existing_facts = [fact['text'] for facts_list in questions_and_facts["factsByDay"].values() for fact in facts_list]
+
         for fact_text in extracted_facts:
+            contradictions = find_contradictions(fact_text, existing_facts)
             #fact_detail = {"text": fact_text, "timestamp": current_timestamp, "action": "existing", "date": formatted_date}
-            fact_detail = {"text": fact_text, "timestamp": current_timestamp, "question": question, "documents":[url]}
+            fact_detail = {"text": fact_text, "timestamp": current_timestamp, "question": question, "documents":[url], "contradictions":contradictions}
             # print('fact detail', fact_detail)
             questions_and_facts["factsByDay"].setdefault(document_date, []).append(fact_detail)            
-            all_suggestions[formatted_date].append({"text": fact_text, "timestamp": current_timestamp})
+            # all_suggestions[formatted_date].append({"text": fact_text, "timestamp": current_timestamp})
+            all_suggestions[formatted_date].append(fact_detail)
             #all_suggestions.append(fact_detail)
     
     # questions_and_facts['documents'] = url
@@ -126,8 +165,7 @@ def submit_and_retrieve():
     "question": "",
     "factsByDay": {},
     "status": "processing" 
-}
-   
+    }
     
     data = request.get_json()
     question = data.get('question', '')
