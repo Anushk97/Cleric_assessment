@@ -12,9 +12,9 @@ app.jinja_env.add_extension('jinja2.ext.do')
 openai.api_key = ''
 
 questions_and_facts = {
-    "question": [],
-    "documents": [],
-    "factsByDay": {},
+    "question": [], #list of dictionaries, questions and documents text
+    "documents": [], 
+    "factsByDay": {}, 
     "status": "processing" 
 }
 
@@ -137,7 +137,7 @@ def submit_question_and_documents():
         for fact_text in extracted_facts:
             contradictions = find_contradictions(fact_text, existing_facts)
             #fact_detail = {"text": fact_text, "timestamp": current_timestamp, "action": "existing", "date": formatted_date}
-            fact_detail = {"text": fact_text, "timestamp": current_timestamp, "question": question, "documents":[url], "contradictions":contradictions}
+            fact_detail = {"text": fact_text, "timestamp": current_timestamp, "question": question, "documents":[url], "contradictions":contradictions} #versioning by timestamp 
             # print('fact detail', fact_detail)
             questions_and_facts["factsByDay"].setdefault(document_date, []).append(fact_detail)            
             # all_suggestions[formatted_date].append({"text": fact_text, "timestamp": current_timestamp})
