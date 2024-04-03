@@ -112,7 +112,7 @@ def submit_question_and_documents():
         response = openai.chat.completions.create(
             model="gpt-3.5-turbo-0125",  # or the latest available model
             messages=[
-            {"role": "system", "content": "Summarize content and keep it under 3 lines."},
+            {"role": "system", "content": "Summarize content and keep it under 3 lines. the data is a conversation log with date and people. arrange the data with chronological date "},
                 {"role": "user", "content": f"{document_text}"},
                 {"role": "system", "content": f"Based on the above, {question}"}
     ],
