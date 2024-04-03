@@ -4,7 +4,7 @@
 {% extends "template.html" %}
 {% block content %}
 
-
+<link rel="stylesheet" href="path/to/your/styles.css">
 <html lang="en" dir="ltr">
 <div class="container"></div>
 <head>
@@ -18,7 +18,7 @@
             <input type="text" id="question" name="question"><br>
             <label for="documents">Document URLs (comma-separated):</label><br>
             <textarea id="documents" name="documents" rows="5" cols="33"></textarea><br>
-            <input type="button" value="submit" onclick="submitForm()">
+            <input type="button" value="submit" onclick="submitForm()" class="submit-button">
         </form>
     </div>
 
@@ -124,6 +124,8 @@
 
             var modalContent = document.getElementById('suggestionsContent');
             modalContent.innerHTML = '';  // Clear previous content
+            
+            window.suggestions = suggestions; 
 
             Object.keys(suggestions).forEach(function(date, index) {  // Added 'index' for use in identifier
                 // Create a section for each date
@@ -139,6 +141,7 @@
                     // Create elements to display the suggestion
                     var suggestionDiv = document.createElement("div");
                     var textPara = document.createElement("p");
+                    console.log("text", textPara);
                     textPara.textContent = suggestion.text;
                     suggestionDiv.appendChild(textPara);
 
@@ -172,6 +175,16 @@
                     // Append the dateSection to modalContent
                 modalContent.appendChild(dateSection);
             });
+            var acceptAllBtn = document.createElement("button");
+                acceptAllBtn.textContent = "Accept All";
+                acceptAllBtn.onclick = handleAcceptAll;
+                modalContent.appendChild(acceptAllBtn);
+
+                // Create and append "Reject All" button
+                var rejectAllBtn = document.createElement("button");
+                rejectAllBtn.textContent = "Reject All";
+                rejectAllBtn.onclick = handleRejectAll;
+                modalContent.appendChild(rejectAllBtn);
 
             // Create and append "Close" button
             var closeBtn = document.createElement("button");
@@ -278,26 +291,6 @@
 
         </script>
 
-        <style>
-        #suggestionsModal {
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
-        }
-        
-        #suggestionsContent {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-        }
-        </style>
         
 </body>
 </html>

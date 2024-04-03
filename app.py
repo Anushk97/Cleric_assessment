@@ -62,11 +62,6 @@ def find_contradictions(new_fact, existing_facts):
         
         print('response', response)
         
-        # if 'choices' in response and response['choices']:
-        #     # Access the 'text' of the first choice
-        #     text_content = response['choices'][0].get('text', '')
-        #     if "yes" in text_content.lower():
-        #         contradictions.append(existing_fact)
         if response.choices:
             content = response.choices[0].message.content
             if "yes" in content.lower():
@@ -98,7 +93,7 @@ def submit_question_and_documents():
     
     for url, document_text in document_texts.items():
         # Process each document's text with the OpenAI API to extract facts
-        date_match = re.search(r'\d{4}-\d{2}-\d{2}', url)
+        date_match = re.search(r'\d{4}\d{2}\d{2}', url)
         # print('date match', date_match)
         
         if date_match:
@@ -106,13 +101,13 @@ def submit_question_and_documents():
         else:
             document_date = "2024-01-02"  # Default date
             
-        document_date_obj = datetime.strptime(document_date, "%Y-%m-%d")
+        document_date_obj = datetime.strptime(document_date, "%Y%m%d")
         # print('doc date', document_date_obj)
         
         response = openai.chat.completions.create(
             model="gpt-3.5-turbo-0125",  # or the latest available model
             messages=[
-            {"role": "system", "content": "Summarize content and keep it under 3 lines."},
+            {"role": "system", "content": "You are a smart assistant tasked with summarizing key decisions and important facts from a series of call logs. The number of summaries should be equal to the number of points in the call log. start each summary by - the team has"},
                 {"role": "user", "content": f"{document_text}"},
                 {"role": "system", "content": f"Based on the above, {question}"}
     ],
@@ -135,22 +130,21 @@ def submit_question_and_documents():
         existing_facts = [fact['text'] for facts_list in questions_and_facts["factsByDay"].values() for fact in facts_list]
 
         for fact_text in extracted_facts:
-            contradictions = find_contradictions(fact_text, existing_facts)
-            #fact_detail = {"text": fact_text, "timestamp": current_timestamp, "action": "existing", "date": formatted_date}
-            fact_detail = {"text": fact_text, "timestamp": current_timestamp, "question": question, "documents":[url], "contradictions":contradictions}
-            # print('fact detail', fact_detail)
-            questions_and_facts["factsByDay"].setdefault(document_date, []).append(fact_detail)            
-            # all_suggestions[formatted_date].append({"text": fact_text, "timestamp": current_timestamp})
-            all_suggestions[formatted_date].append(fact_detail)
-            #all_suggestions.append(fact_detail)
+            if fact_text.strip():
+                contradictions = find_contradictions(fact_text, existing_facts)
+                #fact_detail = {"text": fact_text, "timestamp": current_timestamp, "action": "existing", "date": formatted_date}
+                fact_detail = {"text": fact_text, "timestamp": current_timestamp, "question": question, "documents":[url], "contradictions":contradictions}
+                # print('fact detail', fact_detail)
+                questions_and_facts["factsByDay"].setdefault(formatted_date, []).append(fact_detail)            
+                # all_suggestions[formatted_date].append({"text": fact_text, "timestamp": current_timestamp})
+                all_suggestions[formatted_date].append(fact_detail)
+                #all_suggestions.append(fact_detail)
     
-    # questions_and_facts['documents'] = url
-    # questions_and_facts['question'] = question
     questions_and_facts['question'].append(question)
     questions_and_facts["status"] = "done"
     # print('P1', questions_and_facts)
     
-    # print('SUGGESTION', all_suggestions)
+    print('SUGGESTION', all_suggestions)
     #print('questions and facts', questions_and_facts)
     #return jsonify({"suggestions": suggestions_with_dates})
     
@@ -188,7 +182,7 @@ def submit_and_retrieve():
         response = openai.chat.completions.create(
             model="gpt-3.5-turbo-0125",  # or the latest available model
             messages=[
-            {"role": "system", "content": "Summarize content and keep it under 3 lines."},
+            {"role": "system", "content": "You are a smart assistant tasked with summarizing key decisions and important facts from a series of call logs. Your summaries should be clear, and focus on user query. The number of summaries should be equal to the number of points in the call log. one summary for each point."},
                 {"role": "user", "content": f"{document_text}"},
                 {"role": "system", "content": f"Based on the above, {question}"}
     ],
@@ -250,9 +244,17 @@ def view_facts_page():
                     min_date = fact_date
                 hours_diff = (current_time - fact_date).total_seconds() / 3600
                 fact['hours_diff'] = hours_diff
-    start_date = min_date.strftime('%Y-%m-%d')
+    #start_date = min_date.strftime('%Y-%m-%d')
     
-    # print('filtered facts', filtered_questions_and_facts)
+    if filtered_questions_and_facts["factsByDay"]:
+        # Assuming the keys are already in 'YYYY-MM-DD' format
+        all_dates = list(questions_and_facts["factsByDay"].keys())
+        start_date = min(all_dates)  # Find the earliest date
+    else:
+        start_date = min_date.strftime('%Y-%m-%d')
+    
+    print('start date', start_date)
+    print('filtered facts', filtered_questions_and_facts)
     # Pass the filtered facts to the template instead of the original questions_and_facts["factsByDay"]
     return render_template('view_facts.html',unique_questions=unique_questions, start_date=start_date, questions_and_facts=filtered_questions_and_facts, current_time=current_time)
 
@@ -266,7 +268,7 @@ def record_suggestion():
     # print('action in RS::', action)
     date_key = data.get('date')
     #date_key = '2024-01-02'
-    # print('date_key', date_key)
+    print('date_key', date_key)
     
     # print('FLAG4', questions_and_facts)
 
@@ -279,7 +281,7 @@ def record_suggestion():
             if fact["text"] == suggestion['text']:
                 
                 #print("YASSSS")
-                fact["action"] = "added"  # Update the action to 'added'
+                fact["action"] = "accepted"  # Update the action to 'added'
 
     elif action == "reject":        
         #print("NOOOO")
@@ -293,28 +295,27 @@ def record_suggestion():
 @app.route('/bulk_record_suggestion', methods=['POST'])
 def bulk_record_suggestion():
     data = request.get_json()
-    suggestions = data.get('suggestions', [])  # List of suggestion objects
+    suggestions = data.get('suggestions', {})  # Expecting a dictionary with dates as keys
     action = data.get('action', '')  # 'accept' or 'reject'
 
-    # Loop through the list of suggestions
-    for suggestion in suggestions:
-        suggestion_text = suggestion.get('text')
-        date_key = suggestion.get('date')
+    # Loop through the dictionary of suggestions
+    for date_key, suggestions_list in suggestions.items():
+        for suggestion in suggestions_list:
+            suggestion_text = suggestion.get('text')
 
-        if action == "accept":
-            # Logic to add the suggestion to the persistent storage or in-memory structure
-            if date_key and suggestion_text:  # Ensure date and text are available
+            if action == "accept":
+                # Logic to mark the suggestion as accepted
                 if date_key in questions_and_facts["factsByDay"]:
-                    if suggestion_text not in questions_and_facts["factsByDay"][date_key]:
-                        questions_and_facts["factsByDay"][date_key].append(suggestion_text)
-                else:
-                    questions_and_facts["factsByDay"][date_key] = [suggestion_text]
+                    for fact in questions_and_facts["factsByDay"][date_key]:
+                        if fact['text'] == suggestion_text:
+                            fact['action'] = 'accepted'  # Mark as accepted
 
-        elif action == "reject":
-            # Logic to remove the suggestion from the persistent storage or in-memory structure
-            if date_key and suggestion_text and date_key in questions_and_facts["factsByDay"]:
-                if suggestion_text in questions_and_facts["factsByDay"][date_key]:
-                    questions_and_facts["factsByDay"][date_key].remove(suggestion_text)
+            elif action == "reject":
+                # Logic to mark the suggestion as rejected
+                if date_key in questions_and_facts["factsByDay"]:
+                    for fact in questions_and_facts["factsByDay"][date_key]:
+                        if fact['text'] == suggestion_text:
+                            fact['action'] = 'rejected'  # Mark as rejected
 
     return jsonify({"status": "success"})
 
@@ -330,16 +331,6 @@ def reset_questions_and_facts():
 
     return jsonify({'status': 'success'})
 
-@app.route('/')
-def home():
-    return render_template('home.html')
-
-@app.route('/about')
-def about():
-    return render_template('about.html')
-
-
-
 if __name__ == "__main__":
-    app.run(port=8000, debug=True)
+    app.run(port=5000, debug=True)
 

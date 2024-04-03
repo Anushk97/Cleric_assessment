@@ -4,77 +4,112 @@
 {% block title %}Question and Extracted Facts{% endblock %}
 
 {% block styles %}
-    {{ super() }} 
-    <style>
-        .added-fact { color: green; }
-        .removed-fact { color: red; }
-    </style>
+{{ super() }}
+<link href="https://unpkg.com/vis-timeline/dist/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
+<style>
+    .added-fact { color: green; }
+    .removed-fact { color: red; }
+    #visualization { height: 200px; border: 1px solid lightgray; margin-bottom: 20px; }
+</style>
 {% endblock %}
 
 {% block content %}
-    <h1>Question and Extracted Facts</h1>
-
-    <!-- Select for Questions -->
-    <label for="questionSelect">Select Questions:</label>
-    <select id="questionSelect" multiple onchange="updateFactsByDate(document.getElementById('timeSlider').value)">
-        <!-- Assuming you have a list of unique questions available -->
-        {% for question in unique_questions %}
-        <option value="{{ question }}">{{ question }}</option>
-        {% endfor %}
-    </select>
-
-    <input type="date" id="timeSlider" value="{{ start_date }}" onchange="updateFactsByDate(this.value)">
-
-    <div id="factsContainer">
+<h1>Question and Extracted Facts</h1>
+<div id="visualization"></div>
+<div id="factsContainer" style="margin-top: 100px;">
     {% for date, facts in questions_and_facts['factsByDay'].items() %}
-        <ul>
-            {% for fact in facts %}
-                {% if fact is mapping %}
-                    {% set fact_class = "" %}
-                    {% if 'hours_diff' in fact and fact.hours_diff <= 24 %}
-                        {% if fact['action'] == 'added' %}
-                            {% set fact_class = "added-fact" %}
-                        {% elif fact['action'] == 'rejected' %}
-                            {% set fact_class = "removed-fact" %}
-                        {% endif %}
-                    {% endif %}
-                    {% if fact['timestamp'] %}
-                        {% set timestamp = fact['timestamp'].split('T') %}
-                        {% set date_part = timestamp[0] %}
-                        {% set time_part = timestamp[1].split('.')[0] %}
-                        <li class="{{ fact_class }}" data-date="{{ date_part }}" data-question="{{ fact['question'] }}" data-documents="{{ fact['documents'] | join(',') }}">{{ fact['text'] }}</li>
-                    {% else %}
-                        <li class="{{ fact_class }}" data-date="{{ date_part }}" data-question="{{ fact['question'] }}" data-documents="{{ fact['documents'] | join(',') }}">{{ fact['text'] }}</li>
-                    {% endif %}
-                {% endif %}
-            {% endfor %}
-        </ul>
+    <ul>
+        {% for fact in facts %}
+        {% if fact is mapping %}
+        <li class="{{ 'added-fact' if fact.action == 'accepted' else 'removed-fact' }}" 
+            data-date="{{ date }}" 
+            data-question="{{ fact.question }}" 
+            data-documents="{{ fact.documents | join(',') }}">
+            {{ fact.text }}
+        </li>
+        {% endif %}
+        {% endfor %}
+    </ul>
     {% endfor %}
-    </div>
-    <button id="resetBtn" onclick="resetQuestionAndFacts()">Empty Facts</button>
+</div>
+<button id="resetBtn" onclick="resetQuestionAndFacts()" class="reset-button">Empty Facts</button>
 {% endblock %}
 
-{%block scripts %}
-    <script>
-        function updateFactsByDate(selectedDate) {
-            var selectedQuestions = Array.from(document.getElementById('questionSelect').selectedOptions).map(option => option.value);
-            
-            var facts = document.querySelectorAll('#factsContainer li');
-            
-            facts.forEach(function(fact) {
-                var matchesDate = fact.dataset.date === selectedDate;
-                var matchesQuestion = selectedQuestions.length === 0 || selectedQuestions.includes(fact.dataset.question);
-                var factDocuments = fact.dataset.documents.split(',');
-                
-                if (matchesDate && matchesQuestion) {
-                    fact.style.display = '';
-                } else {
-                    fact.style.display = 'none';
-                }
-            });
-        }
+{% block scripts %}
+{{ super() }}
+<script src="https://unpkg.com/vis-timeline/dist/vis-timeline-graph2d.min.js"></script>
+<script>
 
-        function resetQuestionAndFacts() {
+document.addEventListener("DOMContentLoaded", function() {
+    var container = document.getElementById('visualization');
+    var items = new vis.DataSet();
+
+    var factCounter = 1; // Global counter to ensure each fact has a unique ID
+
+    {% for date, facts in questions_and_facts['factsByDay'].items() %}
+        var content = "Facts for {{ date }}: ";
+        {% for fact in facts %}
+            content += "{{ fact['text'] | escape }}; ";
+            {% endfor %}
+            items.add({
+                id: 'fact-' + factCounter,
+                start: new Date('{{ date }}'),
+                content: "Fact " + factCounter + " added on {{ date }}",
+                className: 'custom-timeline-item'
+            });
+            factCounter++; // Increment the counter for each fact
+    {% endfor %}
+
+    var options = {};
+    var timeline = new vis.Timeline(container, items, options);
+
+    timeline.on('select', function (properties) {
+    console.log("Selected properties:", properties); // Check what is being selected
+    var selectedId = properties.items[0];
+    console.log("Selected ID:", selectedId); // Ensure an ID is captured
+    if (selectedId) {
+        var selectedFact = items.get(selectedId);
+        console.log("Selected Fact:", selectedFact); // Verify the correct fact is retrieved
+        var selectedDate = selectedFact.start.toISOString().split('T')[0];
+        console.log("Selected Date:", selectedDate); // Confirm the date format is correct
+        updateFactsByDate(selectedDate);
+    }
+});
+});
+
+
+function updateFactsByDate(selectedDate) {
+    console.log("Updating facts for date:", selectedDate); // Confirm the function is called
+    var factsContainer = document.getElementById('factsContainer');
+    var facts = document.querySelectorAll('#factsContainer li');
+    var dateMessage = document.getElementById('dateMessage');
+    if (!dateMessage) {
+        dateMessage = document.createElement('h3');
+        dateMessage.id = 'dateMessage';
+        factsContainer.insertBefore(dateMessage, factsContainer.firstChild);
+    }
+    dateMessage.textContent = 'All facts on ' + selectedDate + ':';
+
+    if (selectedDate) {
+        dateMessage.textContent = 'All facts on ' + selectedDate + ':';
+        facts.forEach(function(fact) {
+            fact.style.display = fact.dataset.date === selectedDate ? '' : 'none';
+        });
+    } else {
+        dateMessage.textContent = 'All facts:';
+        facts.forEach(function(fact, index) {
+            fact.style.display = ''; // Show all facts if no date is selected
+            fact.innerHTML = fact.innerHTML.replace(/^\d+\.\s*/, '');
+            if (!fact.innerHTML.startsWith('(Date:')) {
+                fact.innerHTML = '(' + fact.dataset.date + ') ' + fact.innerHTML;
+            }
+        });
+    }
+}
+
+updateFactsByDate();
+
+function resetQuestionAndFacts() {
             fetch('/reset_questions_and_facts', {method: 'POST'})
             .then(response => response.json())
             .then(data => {
@@ -87,5 +122,5 @@
             })
             .catch(error => consol.error('Error', error));
         }
-    </script>
+</script>
 {% endblock %}
