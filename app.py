@@ -107,7 +107,7 @@ def submit_question_and_documents():
         response = openai.chat.completions.create(
             model="gpt-3.5-turbo-0125",  # or the latest available model
             messages=[
-            {"role": "system", "content": "You are a smart assistant tasked with summarizing key decisions and important facts from a series of call logs. The number of summaries should be equal to the number of points in the call log. start each summary by - the team has"},
+            {"role": "system", "content": "Summarize content and keep it under 3 lines. the data is a conversation log with date and people. arrange the data with chronological date "},
                 {"role": "user", "content": f"{document_text}"},
                 {"role": "system", "content": f"Based on the above, {question}"}
     ],
@@ -130,15 +130,14 @@ def submit_question_and_documents():
         existing_facts = [fact['text'] for facts_list in questions_and_facts["factsByDay"].values() for fact in facts_list]
 
         for fact_text in extracted_facts:
-            if fact_text.strip():
-                contradictions = find_contradictions(fact_text, existing_facts)
-                #fact_detail = {"text": fact_text, "timestamp": current_timestamp, "action": "existing", "date": formatted_date}
-                fact_detail = {"text": fact_text, "timestamp": current_timestamp, "question": question, "documents":[url], "contradictions":contradictions}
-                # print('fact detail', fact_detail)
-                questions_and_facts["factsByDay"].setdefault(formatted_date, []).append(fact_detail)            
-                # all_suggestions[formatted_date].append({"text": fact_text, "timestamp": current_timestamp})
-                all_suggestions[formatted_date].append(fact_detail)
-                #all_suggestions.append(fact_detail)
+            contradictions = find_contradictions(fact_text, existing_facts)
+            #fact_detail = {"text": fact_text, "timestamp": current_timestamp, "action": "existing", "date": formatted_date}
+            fact_detail = {"text": fact_text, "timestamp": current_timestamp, "question": question, "documents":[url], "contradictions":contradictions} #versioning by timestamp 
+            # print('fact detail', fact_detail)
+            questions_and_facts["factsByDay"].setdefault(document_date, []).append(fact_detail)            
+            # all_suggestions[formatted_date].append({"text": fact_text, "timestamp": current_timestamp})
+            all_suggestions[formatted_date].append(fact_detail)
+            #all_suggestions.append(fact_detail)
     
     questions_and_facts['question'].append(question)
     questions_and_facts["status"] = "done"
