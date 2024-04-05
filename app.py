@@ -12,9 +12,9 @@ app.jinja_env.add_extension('jinja2.ext.do')
 openai.api_key = ''
 
 questions_and_facts = {
-    "question": [],
-    "documents": [],
-    "factsByDay": {},
+    "question": [], #list of dictionaries, questions and documents text
+    "documents": [], 
+    "factsByDay": {}, 
     "status": "processing" 
 }
 
