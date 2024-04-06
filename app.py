@@ -134,7 +134,7 @@ def submit_question_and_documents():
             #fact_detail = {"text": fact_text, "timestamp": current_timestamp, "action": "existing", "date": formatted_date}
             fact_detail = {"text": fact_text, "timestamp": current_timestamp, "question": question, "documents":[url], "contradictions":contradictions} #versioning by timestamp 
             # print('fact detail', fact_detail)
-            questions_and_facts["factsByDay"].setdefault(document_date, []).append(fact_detail)            
+            questions_and_facts["factsByDay"].setdefault(formatted_date, []).append(fact_detail)            
             # all_suggestions[formatted_date].append({"text": fact_text, "timestamp": current_timestamp})
             all_suggestions[formatted_date].append(fact_detail)
             #all_suggestions.append(fact_detail)
