@@ -17,20 +17,34 @@
 <h1>Question and Extracted Facts</h1>
 <div id="visualization"></div>
 <div id="factsContainer" style="margin-top: 100px;">
+    {% set removed_facts = [] %}
     {% for date, facts in questions_and_facts['factsByDay'].items() %}
-    <ul>
         {% for fact in facts %}
-        {% if fact is mapping %}
-        <li class="{{ 'added-fact' if fact.action == 'accepted' else 'removed-fact' }}" 
-            data-date="{{ date }}" 
-            data-question="{{ fact.question }}" 
-            data-documents="{{ fact.documents | join(',') }}">
-            {{ fact.text }}
-        </li>
-        {% endif %}
+            {% if fact.contradictions and fact.contradictions.status == 'remove' %}
+                {% for existing_fact in fact.contradictions.existing_facts %}
+                    {% if existing_fact not in removed_facts %}
+                        {% do removed_facts.append(existing_fact) %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
         {% endfor %}
-    </ul>
     {% endfor %}
+
+    {% for date, facts in questions_and_facts['factsByDay'].items() %}
+        <ul>
+            {% for fact in facts %}
+                {% if fact.text not in removed_facts %}
+                    <li class="{{ 'added-fact' if fact.action == 'accepted' else 'removed-fact' }}" 
+                        data-date="{{ date }}" 
+                        data-question="{{ fact.question }}" 
+                        data-documents="{{ fact.documents | join(',') }}">
+                        {{ fact.text }}
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% endfor %}
+
 </div>
 <button id="resetBtn" onclick="resetQuestionAndFacts()" class="reset-button">Empty Facts</button>
 {% endblock %}
@@ -93,11 +107,13 @@ function updateFactsByDate(selectedDate) {
     if (selectedDate) {
         dateMessage.textContent = 'All facts on ' + selectedDate + ':';
         facts.forEach(function(fact) {
+            const shouldDisplay = fact.getAttribute('data-should-display') === 'true';
             fact.style.display = fact.dataset.date === selectedDate ? '' : 'none';
         });
     } else {
         dateMessage.textContent = 'All facts:';
         facts.forEach(function(fact, index) {
+            const shouldDisplay = fact.getAttribute('data-should-display') === 'true';
             fact.style.display = ''; // Show all facts if no date is selected
             fact.innerHTML = fact.innerHTML.replace(/^\d+\.\s*/, '');
             if (!fact.innerHTML.startsWith('(Date:')) {

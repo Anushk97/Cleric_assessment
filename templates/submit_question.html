@@ -26,7 +26,7 @@
         <div id="suggestionsContent">
             <!-- Suggestions will be injected here -->
         </div>
-        <button onclick="closeModal()">Close</button>
+        
     </div>
     
     <div id="loadingIndicator" style="display:none;">
@@ -145,18 +145,37 @@
                     textPara.textContent = suggestion.text;
                     suggestionDiv.appendChild(textPara);
 
-                    if (suggestion.contradictions && suggestion.contradictions.length > 0) {
+                    if (suggestion.contradictions && suggestion.contradictions["existing_facts"].length > 0) {
                         var contradictionsPara = document.createElement("p");
                         console.log("contradiction", contradictionsPara);
                         contradictionsPara.textContent = "Contradictions:";
                         contradictionsPara.style.color = "red";  // Highlight contradictions
-                        suggestion.contradictions.forEach(function(contradiction) {
+                        
+                        suggestion.contradictions['existing_facts'].forEach(function(contradiction, contradictionIndex) {
                             var contradictionText = document.createElement("p");
                             contradictionText.textContent = contradiction;
+
+                            var contradictionElementId = 'contradiction-' + date + '-' + index;
+                            contradictionText.id = contradictionElementId;
+                            console.log("contradiction ID", contradictionElementId);
                             contradictionsPara.appendChild(contradictionText);
+
                         });
                         suggestionDiv.appendChild(contradictionsPara);
+
+                        var keepBtn = document.createElement("button");
+                        keepBtn.textContent = "Keep Contradiction";
+                        keepBtn.onclick = function() { handleKeepContradiction(suggestion, date + '-' + index); };
+                        suggestionDiv.appendChild(keepBtn);
+
+                        var removeBtn = document.createElement("button");
+                        removeBtn.textContent = "Remove Contradiction";
+                        removeBtn.onclick = function() { handleRemoveContradiction(suggestion, date + '-' + index); };
+                        suggestionDiv.appendChild(removeBtn);
+                        
                     }
+                    dateSection.appendChild(suggestionDiv);
+                    
                     // Create and append Accept and Reject buttons
                     var acceptBtn = document.createElement("button");
                     acceptBtn.textContent = "Accept";
@@ -170,7 +189,6 @@
                     rejectBtn.onclick = function() { handleSuggestionReject(suggestion, date + '-' + index); };  // Use date-index as identifier
                     suggestionDiv.appendChild(rejectBtn);
 
-                    dateSection.appendChild(suggestionDiv);
                 });
                     // Append the dateSection to modalContent
                 modalContent.appendChild(dateSection);
@@ -288,6 +306,73 @@
                     }
                 });
             }
+
+            function handleRemoveContradiction(suggestion, identifier) {
+                console.log("Removing contradiction for identifier:", identifier);
+
+                // The server-side needs to support a route that handles removing contradictions
+                fetch('/record_contradiction', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        suggestion: suggestion,  // Pass the specific suggestion object
+                        action: "remove",
+                        identifier: identifier   // Use the identifier to uniquely identify the contradiction
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Once the contradiction is successfully removed on the server, update the UI
+                    var contradictionElementId = 'contradiction-' + identifier;
+                    console.log("Contradiction element id:", contradictionElementId);
+                    var contradictionElement = document.getElementById(contradictionElementId);
+                    console.log("Contradiction element found:", contradictionElement);
+                    if (contradictionElement) {
+                        contradictionElement.style.color = 'red'; // Change the text color to red to indicate removal
+                        contradictionElement.style.textDecoration = 'line-through';
+                        contradictionElement.disabled = true; // Optionally disable the element to prevent further interaction
+                    }
+                })
+                .catch(error => {
+                    console.error('Error removing contradiction:', error);
+                });
+            }
+
+            function handleKeepContradiction(suggestion, identifier) {
+                console.log("Keeping contradiction for identifier:", identifier);
+
+                // The server-side needs to support a route that handles keeping contradictions
+                fetch('/record_contradiction', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        suggestion: suggestion,  // Pass the specific suggestion object
+                        action: "keep",          // Indicate that we are keeping the contradiction
+                        identifier: identifier   // Use the identifier to uniquely identify the contradiction
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Once the contradiction is successfully kept on the server, update the UI
+                    var contradictionElementId = 'contradiction-' + identifier;
+                    console.log("Contradiction element id:", contradictionElementId);
+                    var contradictionElement = document.getElementById(contradictionElementId);
+                    console.log("Contradiction element found:", contradictionElement);
+                    if (contradictionElement) {
+                        contradictionElement.style.color = 'green'; // Change the text color to green to indicate keeping
+                        contradictionElement.style.textDecoration = 'none'; // Ensure there's no line-through
+                        contradictionElement.disabled = true; // Optionally disable the element to prevent further interaction
+                    }
+                })
+                .catch(error => {
+                    console.error('Error keeping contradiction:', error);
+                });
+            }
+
 
         </script>
 
