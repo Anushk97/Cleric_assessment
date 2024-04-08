@@ -12,19 +12,19 @@ app.jinja_env.add_extension('jinja2.ext.do')
 openai.api_key = ''
 
 questions_and_facts = {
-    "question": [], #list of dictionaries, questions and documents text
-    "documents": [], 
-    "factsByDay": {}, 
-    "status": "processing" 
+    "question": [],
+    "documents": [],
+    "factsByDay": {},
+    "status": "processing"
 }
 
 def migrate_facts_to_dict(questions_and_facts):
     for date_key, facts in questions_and_facts["factsByDay"].items():
         migrated_facts = []
         for fact in facts:
-            if isinstance(fact, str):  # Fact is a string, convert it to a dictionary
+            if isinstance(fact, str):
                 migrated_facts.append({"text": fact, "timestamp": None, "action": "existing"})
-            else:  # Fact is already a dictionary, keep as is
+            else:
                 migrated_facts.append(fact)
         questions_and_facts["factsByDay"][date_key] = migrated_facts
 
@@ -37,11 +37,11 @@ def fetch_and_extract_text(urls):
             print(f"Skipping invalid URL: '{url}'")
         try:
             response = requests.get(url)
-            response.raise_for_status()  # Raises an HTTPError for bad responses
+            response.raise_for_status()
             extracted_texts[url] = response.text
         except requests.exceptions.RequestException as e:
             print(f"Failed to fetch or extract text from {url}: {e}")
-            extracted_texts[url] = ""  # Consider how you want to handle failures
+            extracted_texts[url] = "" 
     return extracted_texts
 
 def find_contradictions(new_fact, existing_facts):
