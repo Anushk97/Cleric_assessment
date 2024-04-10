@@ -15,16 +15,16 @@ questions_and_facts = {
     "question": [],
     "documents": [],
     "factsByDay": {},
-    "status": "processing"
+    "status": "processing" 
 }
 
 def migrate_facts_to_dict(questions_and_facts):
     for date_key, facts in questions_and_facts["factsByDay"].items():
         migrated_facts = []
         for fact in facts:
-            if isinstance(fact, str):
+            if isinstance(fact, str):  # Fact is a string, convert it to a dictionary
                 migrated_facts.append({"text": fact, "timestamp": None, "action": "existing"})
-            else:
+            else:  # Fact is already a dictionary, keep as is
                 migrated_facts.append(fact)
         questions_and_facts["factsByDay"][date_key] = migrated_facts
 
@@ -37,11 +37,11 @@ def fetch_and_extract_text(urls):
             print(f"Skipping invalid URL: '{url}'")
         try:
             response = requests.get(url)
-            response.raise_for_status()
+            response.raise_for_status()  # Raises an HTTPError for bad responses
             extracted_texts[url] = response.text
         except requests.exceptions.RequestException as e:
             print(f"Failed to fetch or extract text from {url}: {e}")
-            extracted_texts[url] = "" 
+            extracted_texts[url] = ""  # Consider how you want to handle failures
     return extracted_texts
 
 def find_contradictions(new_fact, existing_facts):
@@ -131,14 +131,15 @@ def submit_question_and_documents():
         existing_facts = [fact['text'] for facts_list in questions_and_facts["factsByDay"].values() for fact in facts_list]
 
         for fact_text in extracted_facts:
-            contradictions = find_contradictions(fact_text, existing_facts)
-            #fact_detail = {"text": fact_text, "timestamp": current_timestamp, "action": "existing", "date": formatted_date}
-            fact_detail = {"text": fact_text, "timestamp": current_timestamp, "question": question, "documents":[url], "contradictions":contradictions} #versioning by timestamp 
-            # print('fact detail', fact_detail)
-            questions_and_facts["factsByDay"].setdefault(formatted_date, []).append(fact_detail)            
-            # all_suggestions[formatted_date].append({"text": fact_text, "timestamp": current_timestamp})
-            all_suggestions[formatted_date].append(fact_detail)
-            #all_suggestions.append(fact_detail)
+            if fact_text.strip():
+                contradictions = find_contradictions(fact_text, existing_facts)
+                #fact_detail = {"text": fact_text, "timestamp": current_timestamp, "action": "existing", "date": formatted_date}
+                fact_detail = {"text": fact_text, "timestamp": current_timestamp, "question": question, "documents":[url], "contradictions":contradictions}
+                # print('fact detail', fact_detail)
+                questions_and_facts["factsByDay"].setdefault(formatted_date, []).append(fact_detail)            
+                # all_suggestions[formatted_date].append({"text": fact_text, "timestamp": current_timestamp})
+                all_suggestions[formatted_date].append(fact_detail)
+                #all_suggestions.append(fact_detail)
     
     questions_and_facts['question'].append(question)
     questions_and_facts["status"] = "done"
