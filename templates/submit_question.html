@@ -24,7 +24,6 @@
 
     <div id="suggestionsModal" style="display:none;">
         <div id="suggestionsContent">
-            <!-- Suggestions will be injected here -->
         </div>
         
     </div>
@@ -36,10 +35,10 @@
     
     <style>
     .loader {
-        border: 8px solid #f3f3f3; /* Lighter grey as the background of the loader */
-        border-top: 8px solid #3498db; /* Primary color */
-        border-right: 8px solid #e74c3c; /* Secondary color */
-        border-bottom: 8px solid #2ecc71; /* Tertiary color */
+        border: 8px solid #f3f3f3; 
+        border-top: 8px solid #3498db;
+        border-right: 8px solid #e74c3c;
+        border-bottom: 8px solid #2ecc71;
         border-radius: 50%;
         width: 40px;
         height: 40px;
@@ -55,7 +54,7 @@
         right: 5px;
         bottom: 5px;
         border: 4px solid transparent;
-        border-top-color: #9b59b6; /* Quaternary color */
+        border-top-color: #9b59b6; 
         border-radius: 50%;
         animation: spinReverse 2s linear infinite;
     }
@@ -68,7 +67,7 @@
         right: 15px;
         bottom: 15px;
         border: 2px solid transparent;
-        border-top-color: #f1c40f; /* Quinary color */
+        border-top-color: #f1c40f; 
         border-radius: 50%;
         animation: spin 2.5s linear infinite;
     }
@@ -96,7 +95,6 @@
         var suggestions; 
         function submitForm() {
             var question = document.getElementById('question').value;
-            //var documents = document.getElementById('documents').value.split(',');
             var documentsInput = document.getElementById('documents').value;
             var documents = documentsInput.split(',').map(doc => doc.trim());
             
@@ -114,7 +112,7 @@
             })
             .then(response => response.json())
             .then(data => {
-                console.log(data);  // Check if suggestions are in the response
+                console.log(data);
                 displaySuggestions(data.suggestions);
             });
         }
@@ -123,22 +121,19 @@
             document.getElementById('loadingIndicator').style.display = 'none';
 
             var modalContent = document.getElementById('suggestionsContent');
-            modalContent.innerHTML = '';  // Clear previous content
+            modalContent.innerHTML = '';
             
             window.suggestions = suggestions; 
 
-            Object.keys(suggestions).forEach(function(date, index) {  // Added 'index' for use in identifier
-                // Create a section for each date
+            Object.keys(suggestions).forEach(function(date, index) {
+                
                 var dateSection = document.createElement("div");
-
-                // Optionally, display the date
                 var dateHeader = document.createElement("h4");
                 dateHeader.textContent = "Date: " + date;
                 dateSection.appendChild(dateHeader);
-
-                //var suggestion = suggestions[date];  // Get the suggestion for this date
+                
                 suggestions[date].forEach(function(suggestion, index) {
-                    // Create elements to display the suggestion
+                    
                     var suggestionDiv = document.createElement("div");
                     var textPara = document.createElement("p");
                     console.log("text", textPara);
@@ -149,7 +144,7 @@
                         var contradictionsPara = document.createElement("p");
                         console.log("contradiction", contradictionsPara);
                         contradictionsPara.textContent = "Contradictions:";
-                        contradictionsPara.style.color = "red";  // Highlight contradictions
+                        contradictionsPara.style.color = "red";
                         
                         suggestion.contradictions['existing_facts'].forEach(function(contradiction, contradictionIndex) {
                             var contradictionText = document.createElement("p");
@@ -176,7 +171,6 @@
                     }
                     dateSection.appendChild(suggestionDiv);
                     
-                    // Create and append Accept and Reject buttons
                     var acceptBtn = document.createElement("button");
                     acceptBtn.textContent = "Accept";
                     acceptBtn.id = 'acceptBtn-' + date + '-' + index;
@@ -258,7 +252,7 @@
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    suggestion: suggestion,  // Pass the specific suggestion object
+                    suggestion: suggestion,
                     action: "accept",
                     date: dateFromIdentifier  // Use the extracted date from the suggestion
                 })
@@ -268,9 +262,9 @@
                 var acceptButton = document.getElementById(acceptButtonId);
                 console.log("accept element found:", acceptButton);
                 if (acceptButton) {
-                    acceptButton.style.backgroundColor = 'green'; // Change the button's background to green
-                    acceptButton.style.color = 'white'; // Change the text color to white for better contrast
-                    acceptButton.disabled = true;// Optionally disable the button to prevent re-acceptance
+                    acceptButton.style.backgroundColor = 'green';
+                    acceptButton.style.color = 'white'; 
+                    acceptButton.disabled = true;
                     }
                 });
             }
@@ -278,7 +272,6 @@
 
         function handleSuggestionReject(suggestion, identifier) {
             // Assuming rejection doesn't need to be sent to the server, or implement similarly to accept
-            // If needed, you can send a similar request to record a rejection
             var parts = identifier.split('-');
             var dateFromIdentifier = parts.slice(0, 3).join('-');
             var rejectButtonId = 'rejectBtn-' + identifier;
@@ -300,26 +293,24 @@
                 var rejectButton = document.getElementById(rejectButtonId);
                 console.log("reject element found:", rejectButton);
                 if (rejectButton) {
-                    rejectButton.style.backgroundColor = 'red'; // Change the button's background to green
-                    rejectButton.style.color = 'white'; // Change the text color to white for better contrast
-                    rejectButton.disabled = true;// Optionally disable the button to prevent re-acceptance
+                    rejectButton.style.backgroundColor = 'red';
+                    rejectButton.style.color = 'white'; 
+                    rejectButton.disabled = true;
                     }
                 });
             }
 
             function handleRemoveContradiction(suggestion, identifier) {
                 console.log("Removing contradiction for identifier:", identifier);
-
-                // The server-side needs to support a route that handles removing contradictions
                 fetch('/record_contradiction', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        suggestion: suggestion,  // Pass the specific suggestion object
+                        suggestion: suggestion,
                         action: "remove",
-                        identifier: identifier   // Use the identifier to uniquely identify the contradiction
+                        identifier: identifier
                     })
                 })
                 .then(response => response.json())
@@ -330,9 +321,9 @@
                     var contradictionElement = document.getElementById(contradictionElementId);
                     console.log("Contradiction element found:", contradictionElement);
                     if (contradictionElement) {
-                        contradictionElement.style.color = 'red'; // Change the text color to red to indicate removal
+                        contradictionElement.style.color = 'red';
                         contradictionElement.style.textDecoration = 'line-through';
-                        contradictionElement.disabled = true; // Optionally disable the element to prevent further interaction
+                        contradictionElement.disabled = true;
                     }
                 })
                 .catch(error => {
@@ -342,30 +333,28 @@
 
             function handleKeepContradiction(suggestion, identifier) {
                 console.log("Keeping contradiction for identifier:", identifier);
-
-                // The server-side needs to support a route that handles keeping contradictions
                 fetch('/record_contradiction', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        suggestion: suggestion,  // Pass the specific suggestion object
-                        action: "keep",          // Indicate that we are keeping the contradiction
-                        identifier: identifier   // Use the identifier to uniquely identify the contradiction
+                        suggestion: suggestion, 
+                        action: "keep",         
+                        identifier: identifier
                     })
                 })
                 .then(response => response.json())
                 .then(data => {
-                    // Once the contradiction is successfully kept on the server, update the UI
+                    
                     var contradictionElementId = 'contradiction-' + identifier;
                     console.log("Contradiction element id:", contradictionElementId);
                     var contradictionElement = document.getElementById(contradictionElementId);
                     console.log("Contradiction element found:", contradictionElement);
                     if (contradictionElement) {
-                        contradictionElement.style.color = 'green'; // Change the text color to green to indicate keeping
-                        contradictionElement.style.textDecoration = 'none'; // Ensure there's no line-through
-                        contradictionElement.disabled = true; // Optionally disable the element to prevent further interaction
+                        contradictionElement.style.color = 'green'; 
+                        contradictionElement.style.textDecoration = 'none';
+                        contradictionElement.disabled = true;
                     }
                 })
                 .catch(error => {

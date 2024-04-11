@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function() {
     var container = document.getElementById('visualization');
     var items = new vis.DataSet();
 
-    var factCounter = 1; // Global counter to ensure each fact has a unique ID
+    var factCounter = 1;
 
     {% for date, facts in questions_and_facts['factsByDay'].items() %}
         var content = "Facts for {{ date }}: ";
@@ -71,21 +71,21 @@ document.addEventListener("DOMContentLoaded", function() {
                 content: "Fact " + factCounter + " added on {{ date }}",
                 className: 'custom-timeline-item'
             });
-            factCounter++; // Increment the counter for each fact
+            factCounter++; 
     {% endfor %}
 
     var options = {};
     var timeline = new vis.Timeline(container, items, options);
 
     timeline.on('select', function (properties) {
-    console.log("Selected properties:", properties); // Check what is being selected
+    console.log("Selected properties:", properties);
     var selectedId = properties.items[0];
-    console.log("Selected ID:", selectedId); // Ensure an ID is captured
+    console.log("Selected ID:", selectedId); 
     if (selectedId) {
         var selectedFact = items.get(selectedId);
-        console.log("Selected Fact:", selectedFact); // Verify the correct fact is retrieved
+        console.log("Selected Fact:", selectedFact);
         var selectedDate = selectedFact.start.toISOString().split('T')[0];
-        console.log("Selected Date:", selectedDate); // Confirm the date format is correct
+        console.log("Selected Date:", selectedDate);
         updateFactsByDate(selectedDate);
     }
 });
@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 function updateFactsByDate(selectedDate) {
-    console.log("Updating facts for date:", selectedDate); // Confirm the function is called
+    console.log("Updating facts for date:", selectedDate);
     var factsContainer = document.getElementById('factsContainer');
     var facts = document.querySelectorAll('#factsContainer li');
     var dateMessage = document.getElementById('dateMessage');
@@ -114,7 +114,7 @@ function updateFactsByDate(selectedDate) {
         dateMessage.textContent = 'All facts:';
         facts.forEach(function(fact, index) {
             const shouldDisplay = fact.getAttribute('data-should-display') === 'true';
-            fact.style.display = ''; // Show all facts if no date is selected
+            fact.style.display = ''; 
             fact.innerHTML = fact.innerHTML.replace(/^\d+\.\s*/, '');
             if (!fact.innerHTML.startsWith('(Date:')) {
                 fact.innerHTML = '(' + fact.dataset.date + ') ' + fact.innerHTML;
