@@ -20,3 +20,10 @@
 
 **Containerization**: Docker is used for containerizing the application, simplifying deployment and ensuring consistency across different environments.
 
+## Notes and Assumptions
+
+- Suggestion box: Closing without selecting any suggestion will auto reject all suggestions.
+
+- The URL checker attempts to create a URL object from the input string and checks if the protocol is either http or https. It returns true for valid URLs and false for invalid ones.
+
+- Once a contradiction is removed, it will not show on the facts page.

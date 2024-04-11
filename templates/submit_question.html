@@ -98,6 +98,14 @@
             var documentsInput = document.getElementById('documents').value;
             var documents = documentsInput.split(',').map(doc => doc.trim());
             
+            const invalidUrls = documents.filter(url => !isValidUrl(url));
+
+            if (invalidUrls.length > 0) {
+                // Display error message for invalid URLs
+                alert("The following URLs are invalid: " + invalidUrls.join(', '));
+                return; // Stop the function execution here
+            }
+
             document.getElementById('loadingIndicator').style.display = 'block';
 
             fetch('/submit_question_and_documents', {
@@ -115,6 +123,18 @@
                 console.log(data);
                 displaySuggestions(data.suggestions);
             });
+        }
+
+        function isValidUrl(urlString) {
+            let url;
+
+            try {
+                url = new URL(urlString);
+            } catch (_) {
+                return false;
+            }
+
+            return url.protocol === "http:" || url.protocol === "https:";
         }
     
         function displaySuggestions(suggestions) {
