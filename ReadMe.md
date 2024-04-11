@@ -27,3 +27,12 @@
 - The URL checker attempts to create a URL object from the input string and checks if the protocol is either http or https. It returns true for valid URLs and false for invalid ones.
 
 - Once a contradiction is removed, it will not show on the facts page.
+
+## Test cases
+
+- https://llm-bot-pficsoahpa-uc.a.run.app/static/call_log_20240314_104111.txt
+
+- https://llm-bot-pficsoahpa-uc.a.run.app/static/call_log_20240315_104111.txt
+
+- https://llm-bot-pficsoahpa-uc.a.run.app/static/call_log_20240317_104111.txt
+
