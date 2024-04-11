@@ -71,7 +71,7 @@ def find_contradictions(new_fact, existing_facts):
         # if "yes" in response.choices[0].text.lower():
         #     contradictions.append(existing_fact)
 
-    print('contradictions', contradictions)
+    # print('contradictions', contradictions)
     return contradictions
 
 
