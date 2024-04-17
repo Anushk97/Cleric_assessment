@@ -79,7 +79,13 @@ def submit_question_and_documents():
         response = openai.chat.completions.create(
             model="gpt-3.5-turbo-0125",
             messages=[
-            {"role": "system", "content": "You are a smart assistant tasked with summarizing key decisions and important facts from a series of call logs. summarize each new point or insight or decision made in the call log. start each point by the team has. generate at least three points."},
+            {"role": "system", "content": """
+            You are a smart assistant tasked with summarizing key decisions and important facts from a series of call logs.\n
+            Summarize each new point or insight or decision made in the call log.\n
+            Start each point by the team has.\n 
+            Generate at least three points.\n
+            """
+            },
                 {"role": "user", "content": f"{document_text}"},
                 {"role": "system", "content": f"Based on the above, {question}"}
     ],
@@ -145,7 +151,15 @@ def submit_and_retrieve():
         response = openai.chat.completions.create(
             model="gpt-3.5-turbo-0125",
             messages=[
-            {"role": "system", "content": "You are a smart assistant tasked with summarizing key decisions and important facts from a series of call logs. summarize each new point or insight or decision made in the call log. start each point by the team has. generate at least three points."},
+            {"role": "system", "content": """
+            You are a smart assistant tasked with summarizing key decisions and important facts from a series of call logs.\n
+            Summarize each new point or insight or decision made in the call log.\n
+            Start each point by the team has.\n 
+            Generate at least three points.\n
+            
+            
+            
+            """},
                 {"role": "user", "content": f"{document_text}"},
                 {"role": "system", "content": f"Based on the above, {question}"}
     ],

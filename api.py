@@ -5,12 +5,11 @@ payload = {
   "documents": [
     "https://llm-bot-pficsoahpa-uc.a.run.app/static/call_log_20240314_104111.txt",
     "https://llm-bot-pficsoahpa-uc.a.run.app/static/call_log_20240315_104111.txt"
-  ],
-  "autoApprove": True
+  ]
 }
 
-response = requests.post('http://127.0.0.1:8000/submit_and_retrieve', json=payload)
-#response = requests.post('https://llm-bot-pficsoahpa-uc.a.run.app/submit_and_retrieve', json=payload)
+#response = requests.post('http://127.0.0.1:8000/submit_and_retrieve', json=payload)
+response = requests.post('https://llm-bot-pficsoahpa-uc.a.run.app/submit_and_retrieve', json=payload)
 
 if response.status_code == 200:
     print(response.json())
