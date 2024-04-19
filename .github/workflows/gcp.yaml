@@ -7,7 +7,7 @@ env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   APP_ID: clericllm
   RUN_REGION: us-east1
-  SA_KEY_JSON: ${{ secrets.GCP_SA_KEY_JSON }}
+  SA_KEY_JSON: ${{ secrets.SERVICE_ACCOUNT_KEY }}
 jobs:
   deploy:
     name: Deploy to Cloud Run
