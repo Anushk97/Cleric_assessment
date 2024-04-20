@@ -1,31 +1,36 @@
-name: Deploy to Cloud Run
+name: Build and Push Python Image to Google Cloud Platform
 on:
   push:
-    branches:
-      - main
-env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  APP_ID: clericllm
-  RUN_REGION: us-east1
-  SA_KEY_JSON: ${{ secrets.SERVICE_ACCOUNT_KEY }}
+    branches: [ main ]
 jobs:
-  deploy:
-    name: Deploy to Cloud Run
+  build-push-gcr:
+    name: Build and Push to GCP
     runs-on: ubuntu-latest
-    if: "contains(github.event.head_commit.message, 'to deploy')"
+    env:
+      IMAGE_NAME: LLM-bot
+      PROJECT_ID: clericllm
     steps:
-      - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
 
-      # Setup gcloud CLI
-      - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
-        with:
-          version: "290.0.1"
-          service_account_key: ${{ secrets.SERVICE_ACCOUNT_KEY }}
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+    - uses: google-github-actions/setup-gcloud@master
+      with:
+        service_account_key: ${{ secrets.SERVICE_ACCOUNT_KEY }}
+        project_id: ${{ env.PROJECT_ID }}
+        export_default_credentials: true
 
-      # Build and push image to Google Container Registry
-      - name: Build
-        run: gcloud builds submit --tag gcr.io/$PROJECT_ID/$APP_ID:$GITHUB_SHA
+    - name: Build Docker Image
+      run: docker build -t $IMAGE_NAME:latest .
 
-      - name: Deploy
-        run: gcloud run deploy $APP_ID --image gcr.io/$PROJECT_ID/$APP_ID:$GITHUB_SHA --platform managed --region $RUN_REGION --allow-unauthenticated
+    - name: Configure Docker Client
+      run: |-
+        gcloud auth configure-docker --quiet
+
+    - name: Push Docker Image to Container Registry (GCR)
+      env:
+        GIT_TAG: v0.1.0
+      run: |-
+        docker tag $IMAGE_NAME:latest gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
+        docker tag $IMAGE_NAME:latest gcr.io/$PROJECT_ID/$IMAGE_NAME:$GIT_TAG
+        docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
+        docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:$GIT_TAG
