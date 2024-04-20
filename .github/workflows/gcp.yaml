@@ -27,7 +27,7 @@ jobs:
         gcloud auth configure-docker us-west1-docker.pkg.dev
 
 
-    - name: Push Docker Image to Container Registryy (GCR)
+    - name: Push Docker Image to Container Registry (GCR)
       env:
         GIT_TAG: v0.1.0
       run: |-
