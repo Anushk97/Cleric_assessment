@@ -7,7 +7,7 @@ jobs:
     name: Build and Push to GCP
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: LLM-bot
+      IMAGE_NAME: llm-bot
       PROJECT_ID: clericllm
     steps:
     - name: Checkout
