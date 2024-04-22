@@ -30,7 +30,7 @@ jobs:
       uses: 'google-github-actions/deploy-cloudrun@v2'
       with:
         service: 'llm-bot'
-        image: 'gcr.io/clericllm/llm-bot:latest'
+        image: 'gcr.io/cloudrun/llm-bot:latest'
       
     - name: Show Output
       run: echo ${{ steps.deploy.outputs.url }}
