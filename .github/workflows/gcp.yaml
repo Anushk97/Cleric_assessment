@@ -31,7 +31,6 @@ jobs:
       with:
         service: ${{ env.SERVICE }}
         region: ${{ env.REGION }}
-        source: ./gcp-service
       
     - name: Show Output
       run: echo ${{ steps.deploy.outputs.url }}
