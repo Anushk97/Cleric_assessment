@@ -5,7 +5,7 @@ on:
 
 env:
   PROJECT_ID: clericllm
-  SERVICE: clericLLM
+  SERVICE: llm-bot
   REGION: us-central1
 
 jobs:
