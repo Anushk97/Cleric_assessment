@@ -27,11 +27,11 @@ jobs:
 
     - name: Deploy to cloud run
       iid: 'deploy'
-      uses: 'google-github-actions/deploy-cloudrun@v2'
+      uses: 'google-github-actions/deploy-cloudrun@v0'
       with:
         service: ${{ env.SERVICE }}
         region: ${{ env.REGION }}
-        image: 'gcr.io/cloudrun/llm-bot:latest'
+        source: 'gcr.io/cloudrun/llm-bot:latest'
       
     - name: Show Output
       run: echo ${{ steps.deploy.outputs.url }}
