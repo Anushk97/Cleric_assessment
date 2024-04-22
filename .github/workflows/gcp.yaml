@@ -26,8 +26,8 @@ jobs:
         credentials_json: '${{ secrets.SERVICE_ACCOUNT_KEY }}'
 
     - name: Deploy to cloud runn
-      iid: 'deploy'
-      uses: 'google-github-actions/deploy-cloudrun@v0'
+      id: 'deploy'
+      uses: 'google-github-actions/deploy-cloudrun@v2'
       with:
         service: ${{ env.SERVICE }}
         region: ${{ env.REGION }}
