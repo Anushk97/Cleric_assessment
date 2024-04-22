@@ -2,36 +2,36 @@ name: Build and Push Python Image to Google Cloud Platform
 on:
   push:
     branches: [ main ]
+
+env:
+  PROJECT_ID: clericllm
+  SERVICE: clericLLM
+  REGION: us-central1
+
 jobs:
-  build-push-gcr:
-    name: Build and Push to GCP
+  deploy:
+    permissions: 
+      contents: 'read'
+      id-token: 'write'
+
     runs-on: ubuntu-latest
-    env:
-      IMAGE_NAME: llm-bot
-      PROJECT_ID: clericllm
     steps:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - uses: google-github-actions/setup-gcloud@main
+    - name: Google Auth
+      id: auth
+      uses: 'google-github-actions/auth@v8'
       with:
-        service_account_key: ${{ secrets.SERVICE_ACCOUNT_KEY }}
-        project_id: ${{ env.PROJECT_ID }}
-        export_default_credentials: true
+        credentials_json: '${{ secrets.SERVICE_ACCOUNT_KEY }}'
 
-    - name: Build Docker Image
-      run: docker build -t $IMAGE_NAME:latest .
-
-    - name: Configure Docker Client
-      run: |-
-        gcloud auth configure-docker us-west1-docker.pkg.dev
-
-
-    - name: Push Docker Image to Container Registry (GCR)
-      env:
-        GIT_TAG: v0.1.0
-      run: |-
-        docker tag $IMAGE_NAME:latest gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
-        docker tag $IMAGE_NAME:latest gcr.io/$PROJECT_ID/$IMAGE_NAME:$GIT_TAG
-        docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
-        docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:$GIT_TAG
+    - name: Deploy to cloud run
+      id: deploy
+      uses: 'google-github-actions/deploy-cloudrun@v8'
+      with:
+        service: ${{ env.SERVICE }}
+        region: ${{ env.REGION }}
+        source: ./gcp-service
+      
+    - name: Show Output
+      run: echo ${{ steps.deploy.outputs.url }}
