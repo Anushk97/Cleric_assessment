@@ -31,7 +31,7 @@ jobs:
       with:
         service: ${{ env.SERVICE }}
         region: ${{ env.REGION }}
-        source: 'gcr.io/clericllm/llm-bot:latest'
+        source: 'gcr.io/clericllm/llm-bot'
       
     - name: Show Output
       run: echo ${{ steps.deploy.outputs.url }}
