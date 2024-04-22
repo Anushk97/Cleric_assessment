@@ -29,7 +29,8 @@ jobs:
       iid: 'deploy'
       uses: 'google-github-actions/deploy-cloudrun@v2'
       with:
-        service: 'llm-bot'
+        service: ${{ env.SERVICE }}
+        region: ${{ env.REGION }}
         image: 'gcr.io/cloudrun/llm-bot:latest'
       
     - name: Show Output
